@@ -140,7 +140,7 @@ protected:
   rs_extrinsics color2depth_extrinsic_;  // color frame is base frame
   rs_extrinsics color2ir_extrinsic_;     // color frame is base frame
   rs_source rs_source_ = RS_SOURCE_VIDEO;
-  bool start_camera_ = true;
+  bool start_camera_ = false;
   bool start_stop_srv_called_ = false;
 
   struct CameraOptions
@@ -180,6 +180,7 @@ protected:
   virtual bool checkForSubscriber();
   virtual void wrappedSystem(const std::vector<std::string>& string_argv);
   virtual void setFrameCallbacks();
+  virtual void subscriberCallback();
   virtual std::string checkFirmwareValidation(const std::string& fw_type,
                                               const std::string& current_fw,
                                               const std::string& camera_name,

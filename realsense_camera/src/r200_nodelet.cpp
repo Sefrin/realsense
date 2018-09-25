@@ -91,9 +91,11 @@ namespace realsense_camera
   void R200Nodelet::advertiseTopics()
   {
     BaseNodelet::advertiseTopics();
+    ros::SubscriberStatusCallback rsscb = boost::bind(&R200Nodelet::subscriberCallback, this);
+    image_transport::SubscriberStatusCallback itsscb = boost::bind(&R200Nodelet::subscriberCallback, this);
     ros::NodeHandle ir2_nh(nh_, IR2_NAMESPACE);
     image_transport::ImageTransport ir2_image_transport(ir2_nh);
-    camera_publisher_[RS_STREAM_INFRARED2] = ir2_image_transport.advertiseCamera(IR2_TOPIC, 1);
+    camera_publisher_[RS_STREAM_INFRARED2] = ir2_image_transport.advertiseCamera(IR2_TOPIC, 1, itsscb, itsscb, rsscb, rsscb);
   }
 
   /*

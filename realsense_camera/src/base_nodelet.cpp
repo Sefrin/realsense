@@ -113,7 +113,7 @@ namespace realsense_camera
     getCameraOptions();
     setStaticCameraOptions(dynamic_params);
     setStreams();
-    startCamera();
+    subscriberCallback();
 
     // Start transforms thread
     if (enable_tf_ == true)
@@ -371,18 +371,21 @@ namespace realsense_camera
    */
   void BaseNodelet::advertiseTopics()
   {
+    ros::SubscriberStatusCallback rsscb = boost::bind(&BaseNodelet::subscriberCallback, this);
+    image_transport::SubscriberStatusCallback itsscb = boost::bind(&BaseNodelet::subscriberCallback, this);
+
     ros::NodeHandle color_nh(nh_, COLOR_NAMESPACE);
     image_transport::ImageTransport color_image_transport(color_nh);
-    camera_publisher_[RS_STREAM_COLOR] = color_image_transport.advertiseCamera(COLOR_TOPIC, 1);
+    camera_publisher_[RS_STREAM_COLOR] = color_image_transport.advertiseCamera(COLOR_TOPIC, 1, itsscb, itsscb, rsscb, rsscb);
 
     ros::NodeHandle depth_nh(nh_, DEPTH_NAMESPACE);
     image_transport::ImageTransport depth_image_transport(depth_nh);
-    camera_publisher_[RS_STREAM_DEPTH] = depth_image_transport.advertiseCamera(DEPTH_TOPIC, 1);
-    pointcloud_publisher_ = depth_nh.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
+    camera_publisher_[RS_STREAM_DEPTH] = depth_image_transport.advertiseCamera(DEPTH_TOPIC, 1, itsscb, itsscb, rsscb, rsscb);
+    pointcloud_publisher_ = depth_nh.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1, rsscb, rsscb);
 
     ros::NodeHandle ir_nh(nh_, IR_NAMESPACE);
     image_transport::ImageTransport ir_image_transport(ir_nh);
-    camera_publisher_[RS_STREAM_INFRARED] = ir_image_transport.advertiseCamera(IR_TOPIC, 1);
+    camera_publisher_[RS_STREAM_INFRARED] = ir_image_transport.advertiseCamera(IR_TOPIC, 1, itsscb, itsscb, rsscb, rsscb);
   }
 
   /*
@@ -400,6 +403,22 @@ namespace realsense_camera
         &BaseNodelet::isPoweredCameraService, this);
   }
 
+  /*
+  * react to subscribe/unsubscribe of clients
+  */
+  void BaseNodelet::subscriberCallback()
+  {
+    if (!start_camera_ && checkForSubscriber())
+    {
+      start_camera_ = true;
+      start_stop_srv_called_ = true;
+    }
+    if (start_camera_ && !checkForSubscriber())
+    {
+      start_camera_ = false;
+      start_stop_srv_called_ = true;
+    }
+  }
   /*
    * Get the latest values of the camera options.
    */
